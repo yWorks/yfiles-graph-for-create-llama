@@ -1,6 +1,6 @@
 import { Check, Copy, FileText } from "lucide-react";
 import Image from "next/image";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Button } from "../../button";
 import { FileIcon } from "../../document-preview";
 import {
@@ -12,6 +12,8 @@ import { cn } from "../../lib/utils";
 import { useCopyToClipboard } from "../hooks/use-copy-to-clipboard";
 import { DocumentFileType, SourceData, SourceNode } from "../index";
 import PdfDialog from "../widgets/PdfDialog";
+import { extractSourceNodesData, useSourceNodes } from "@/app/components/graphcomponent/get-data";
+import { SourceNodesDisplay } from "@/app/components/graphcomponent/get-data";
 
 type Document = {
   url: string;
@@ -19,6 +21,9 @@ type Document = {
 };
 
 export function ChatSources({ data }: { data: SourceData }) {
+
+  const { nodes, setNodes } = useSourceNodes();
+  const prevNodesRef = useRef<SourceNode[]>([]);
   const documents: Document[] = useMemo(() => {
     // group nodes by document (a document must have a URL)
     const nodesByUrl: Record<string, SourceNode[]> = {};
@@ -35,7 +40,24 @@ export function ChatSources({ data }: { data: SourceData }) {
     }));
   }, [data.nodes]);
 
+  useEffect(() => {
+    const newNodes = [...data.nodes];
+
+    // Compare if newNodes are different from the current nodes
+    const Same =
+      prevNodesRef.current.length === newNodes.length &&
+      prevNodesRef.current.every((node, index) => node.id === newNodes[index].id);
+
+    if (!Same) {
+      setNodes(newNodes);
+      prevNodesRef.current = newNodes
+    }
+  }, [data.nodes, nodes]);
+
+
+
   if (documents.length === 0) return null;
+
 
   return (
     <div className="space-y-2 text-sm">

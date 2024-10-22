@@ -4,6 +4,9 @@ from llama_index.core.agent import AgentRunner
 from llama_index.core.tools.query_engine import QueryEngineTool
 from app.engine.tools import ToolFactory
 from app.engine.index import get_index
+import logging
+
+logger = logging.getLogger("uvicorn")
 
 
 def get_chat_engine(filters=None, params=None):

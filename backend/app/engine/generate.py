@@ -11,6 +11,7 @@ from app.settings import init_settings
 from llama_index.core.indices import (
     VectorStoreIndex,
 )
+from llama_index.core import PropertyGraphIndex
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger()
@@ -25,7 +26,7 @@ def generate_datasource():
     # Set private=false to mark the document as public (required for filtering)
     for doc in documents:
         doc.metadata["private"] = "false"
-    index = VectorStoreIndex.from_documents(
+    index = PropertyGraphIndex.from_documents(
         documents,
     )
     # store it for later
