@@ -16,6 +16,10 @@ With this tool, you can gain deeper insights into how LlamaIndex processes infor
 ## Getting Started
 
 Before beginning the project, ensure you add your agent specifications to a .env file located in the backend folder.
+Alternatively, you can modify the `.env_template` file located in the backend.
+To use this template, simply add your OpenAI key and uncomment the line marked with a `TODO`. Once you've made the edit, rename the file by removing the 
+`_template part`, leaving it as `.env`.
+
 
 
 First, startup the backend as described in the [backend README](./backend/README.md).
