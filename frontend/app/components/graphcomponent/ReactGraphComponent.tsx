@@ -108,14 +108,14 @@ export function ReactGraphComponent({ graphData, currentSources }: { graphData: 
 
 
     if (currentSources.length !== 0) {
-      const currentIds = currentSources.flatMap(source => extractImportantWords(source.text))
+      const currentIds = currentSources.flatMap(source => extractImportantWords(source.text)).map(source => source.toLowerCase())
       const filteredGraph = graphComponent.graph as FilteredGraphWrapper
       const completeGraph = filteredGraph.wrappedGraph
 
       for (const node of completeGraph!.nodes.toArray()) {
         const baseClass = 'node'
 
-        if (currentIds.includes(node.tag.label)) {
+        if (currentIds.includes(node.tag.label.toLowerCase())) {
           node.style.cssClass = `${baseClass} ${cssHovering}`.trim()
           visibleNodeList.push(node.tag.label)
           const neighbors = completeGraph!.neighbors(node).toArray()
