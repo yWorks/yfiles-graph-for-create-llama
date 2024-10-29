@@ -1,4 +1,8 @@
 This is a [LlamaIndex](https://www.llamaindex.ai/) project using [Next.js](https://nextjs.org/) bootstrapped with [`create-llama`](https://github.com/run-llama/LlamaIndexTS/tree/main/packages/create-llama).
+## yFiles Integration
+
+To integrate yfiles into your project, copy your yfiles license into the `./frontend/app/components/graphcomponents` directory.
+
 
 ## Getting Started
 
