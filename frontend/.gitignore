@@ -34,7 +34,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-#license
+# yfiles
 license.json
+yfiles*.tgz
 
 output/

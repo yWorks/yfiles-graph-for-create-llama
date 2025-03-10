@@ -65,7 +65,7 @@ app.include_router(file_upload_router, prefix="/api/chat/upload")
 app.include_router(knowledge_graph_router, prefix="/api/knowledge_graph")
 
 if __name__ == "__main__":
-    app_host = os.getenv("APP_HOST", "0.0.0.0")
+    app_host = os.getenv("APP_HOST", "127.0.0.1")
     app_port = int(os.getenv("APP_PORT", "8000"))
     reload = True if environment == "dev" else False
 

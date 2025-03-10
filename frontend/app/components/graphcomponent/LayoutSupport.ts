@@ -1,107 +1,102 @@
-/****************************************************************************
- ** @license
- ** This demo file is part of yFiles for HTML 2.6.0.4.
- ** Copyright (c) 2000-2024 by yWorks GmbH, Vor dem Kreuzberg 28,
- ** 72070 Tuebingen, Germany. All rights reserved.
- **
- ** yFiles demo files exhibit yFiles for HTML functionalities. Any redistribution
- ** of demo files in source code or binary form, with or without
- ** modification, is not permitted.
- **
- ** Owners of a valid software license for a yFiles for HTML version that this
- ** demo is shipped with are allowed to use the demo source code as basis
- ** for their own yFiles for HTML powered applications. Use of such programs is
- ** governed by the rights and conditions as set out in the yFiles for HTML
- ** license agreement.
- **
- ** THIS SOFTWARE IS PROVIDED ''AS IS'' AND ANY EXPRESS OR IMPLIED
- ** WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- ** MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN
- ** NO EVENT SHALL yWorks BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- ** SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
- ** TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- ** PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- ** LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- ** NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- ** SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- **
- ***************************************************************************/
-//import LayoutWorker from './LayoutWorker?worker'
-import { Class, GraphComponent, HierarchicLayout, LabelAngleReferences, LabelPlacements, LayoutExecutor, OrganicLayout, OrganicLayoutData, OrganicLayoutScope, PreferredPlacementDescriptor } from 'yfiles'
-
-//const layoutWorker = new LayoutWorker()
+import {
+  EdgeLabelPreferredPlacement,
+  GraphComponent,
+  INode,
+  LabelAngleReferences,
+  LabelEdgeSides,
+  LayoutDescriptor,
+  LayoutExecutorAsync,
+  OrganicLayoutData,
+  OrganicScope,
+} from "@yfiles/yfiles";
 
 /**
  * Keeps track of layout requests on the graph and makes sure that there is always a clean layout
- * afterwards.
+ * afterward.
  */
 export class LayoutSupport {
-  private executor: LayoutExecutor
-  private needsLayout = false
-  private isLayoutRunning = false
-  constructor(graphComponent: GraphComponent) {
-    // helper function that performs the actual message passing to the web worker
-    /*const webWorkerMessageHandler = (data: unknown): Promise<any> => {
-      return new Promise((resolve) => {
-        layoutWorker.onmessage = (e: any) => resolve(e.data)
-        layoutWorker.postMessage(data)
-      })
-    }
-*/
-    Class.ensure(HierarchicLayout)
-    const layoutData = getOrganicLayoutData()
+  private needsLayout = false;
+  private isLayoutRunning = false;
 
-    this.executor = new LayoutExecutor({
-      //messageHandler: webWorkerMessageHandler,
-      graphComponent: graphComponent,
-      layout: getOrganicLayout(),
-      layoutData,
-      duration: '1s',
-      animateViewport: true,
-      easedAnimation: true
-    })
-  }
+  private worker = new Worker(new URL("./WorkerLayout", import.meta.url), {
+    type: "module",
+  });
+
+  constructor(private readonly graphComponent: GraphComponent) {}
 
   /**
    * Can be called subsequent times, to schedule layouts without interfering with currently
    * running layouts.
    */
-  async scheduleLayout() {
-    this.needsLayout = true
+  async scheduleLayout(incrementalNodes: INode[] = []) {
+    this.needsLayout = true;
     if (this.isLayoutRunning) {
-      return
+      return;
     }
 
-    while (this.needsLayout) {
-      this.isLayoutRunning = true
-      this.needsLayout = false
+    if (this.needsLayout) {
+      this.isLayoutRunning = true;
 
-      await this.executor.start()
+      const layoutData = this.createLayoutData(incrementalNodes);
+      const layoutDescriptor = this.createLayoutDescriptor();
 
-      this.isLayoutRunning = false
+      // create an asynchronous layout executor that calculates a layout on the worker
+      const executor = new LayoutExecutorAsync({
+        messageHandler: LayoutExecutorAsync.createWebWorkerMessageHandler(
+          this.worker,
+        ),
+        graphComponent: this.graphComponent,
+        layoutDescriptor,
+        layoutData,
+        animationDuration: "1s",
+        animateViewport: true,
+        easedAnimation: true,
+      });
+
+      // run the Web Worker layout
+      await executor.start();
+
+      this.needsLayout = false;
+      this.isLayoutRunning = false;
     }
   }
-}
 
+  /**
+   * Creates the object that describes the layout to the Web Worker layout executor.
+   * @returns The LayoutDescriptor for this layout
+   */
+  private createLayoutDescriptor(): LayoutDescriptor {
+    return {
+      name: "OrganicLayout",
+      properties: {
+        defaultMinimumNodeDistance: 20,
+        nodeLabelPlacement: "consider",
+        edgeLabelPlacement: "integrated",
+        avoidNodeEdgeOverlap: true,
+      },
+    };
+  }
 
-export function getOrganicLayout() {
-  return new OrganicLayout({
-    minimumNodeDistance: 20,
-    considerNodeLabels: true,
-    //starSubstructureStyle: 'radial-nested',
-    nodeEdgeOverlapAvoided: true,
-    integratedEdgeLabeling: true,
-  })
-}
-
-export function getOrganicLayoutData() {
-  return new OrganicLayoutData({
-    minimumEdgeLengths: (edge) => edge.labels.at(0)?.preferredSize.width ?? 20 * 1.05,
-    edgeLabelPreferredPlacement: new PreferredPlacementDescriptor({
+  /**
+   * Creates the layout data that is used to execute the layout.
+   */
+  private createLayoutData(incrementalNodes: INode[]) {
+    const layoutData = new OrganicLayoutData({
+      minimumEdgeLengths: (edge) =>
+        edge.labels.at(0)?.preferredSize.width ?? 20 * 1.05,
       // Place labels along the edge
-      angleReference: LabelAngleReferences.RELATIVE_TO_EDGE_FLOW,
-      angle: 0,
-      sideOfEdge: LabelPlacements.ON_EDGE,
-    })
-  })
+      edgeLabelPreferredPlacements: new EdgeLabelPreferredPlacement({
+        angleReference: LabelAngleReferences.RELATIVE_TO_EDGE_FLOW,
+        angle: 0,
+        edgeSide: LabelEdgeSides.ON_EDGE,
+      }),
+    });
+    if (incrementalNodes.length > 0) {
+      layoutData.scope.scopeModes = (node) =>
+        incrementalNodes.includes(node)
+          ? OrganicScope.INCLUDE_CLOSE_NODES
+          : OrganicScope.FIXED;
+    }
+    return layoutData;
+  }
 }

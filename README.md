@@ -12,13 +12,10 @@ With this tool, you can gain deeper insights into how LlamaIndex processes infor
 
 ## Getting Started
 
-> [!IMPORTANT]  
-> This repository uses yFiles for HTML 2.6. We are currently migrating this code to the newly released [yFiles for HTML 3.0](https://www.yfiles.com/the-yfiles-sdk/web/yfiles-for-html/version-3).
+Before beginning the project, ensure you add your agent specifications to a `.env` file located in the backend folder.
+Alternatively, you can modify the `.env_template` file located in the backend and rename it to `.env`.
 
-Before beginning the project, ensure you add your agent specifications to a .env file located in the backend folder.
-Alternatively, you can modify the `.env_template` file located in the backend.
-
-To use this template, first obtain a free [yFiles for HTML evaluation package](https://my.yworks.com/signup?product=YFILES_HTML_EVAL) then add your OpenAI key and uncomment the line marked with a `TODO`. Afterward, rename `backend/.env_template` to `.env`.
+To use this template, first obtain a free [yFiles for HTML evaluation package](https://my.yworks.com/signup?product=YFILES_HTML_EVAL) (note the `yfiles` dependency in `frontent/package.json`) then add your OpenAI key and uncomment the line marked with a `TODO`.
 
 Then startup the backend as described in the [backend README](./backend/README.md) and start the development server of the frontend as described in the [frontend README](./frontend/README.md).
 

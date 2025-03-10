@@ -17,7 +17,6 @@ export default function KnowledgeGraph() {
         const fetchKnowledgeGraph = async () => {
             try {
                 const response = await axios.get(`${backend}/api/knowledge_graph/knowledge-graph`);
-                console.log("Response:", response.data);
                 setKnowledgeGraph(response.data.graph_info);
             } catch (err) {
                 setError("Failed to fetch knowledge graph info.");
